@@ -7,6 +7,7 @@ class LRUCache
     @store = LinkedList.new
     @max = max
     @prc = prc
+    @hash = Hash.new
   end
 
   def count
@@ -14,14 +15,27 @@ class LRUCache
   end
 
   def get(key)
-    if @map.include?(key)
-
-      update_node!
+    if @hash.key?(key)
+      node = @hash[key]
+      node.remove
     else
-      eject!
-      calc!(key)
-
+      node = Node.new(key, @prc.call(key))
+      @hash[key] = node
+      if @hash.length > @max
+        toRemove = @store.head.next
+        @hash.delete(toRemove.key)
+        toRemove.remove
+      end
     end
+
+    #append
+    prevTail = @store.tail.prev
+    prevTail.next = node
+    node.prev = prevTail
+    node.next = @store.tail
+    @store.tail.prev = node
+
+    node.val
   end
 
   def to_s
@@ -31,23 +45,14 @@ class LRUCache
   private
 
   def calc!(key)
-    val = @prc.call(key)
-    node = @store.append(key, val)
-    @map[key] = node
     # suggested helper method; insert an (un-cached) key
   end
 
   def update_node!(key)
-    node = @map.get(key)
-    @store.remove(node.key)
-    @store.append(node.key, node.val)
     # suggested helper method; move a node to the end of the list
   end
 
   def eject!
-    firstkey = @store[0].key
-    @store.remove(firstkey)
-    @map.delete(firstkey)
     # return to-update node
   end
 end
